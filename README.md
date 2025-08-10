@@ -1,7 +1,7 @@
-Jenkins CI/CD on Kubernetes with GitHub, Gitea, and ngrok
-Overview
-This project demonstrates how to install Jenkins on a Kubernetes cluster using Ansible and Helm, configure Jenkins pipelines integrated with GitHub and Gitea repositories, and expose Jenkins UI using ngrok or Traefik with Cloudflare ingress.
-Prerequisites
+##Jenkins CI/CD on Kubernetes with GitHub, Gitea, and ngrok
+##Overview
+##This project demonstrates how to install Jenkins on a Kubernetes cluster using Ansible and Helm, configure Jenkins pipelines integrated with GitHub and Gitea repositories, and expose Jenkins UI using ngrok or Traefik with Cloudflare ingress.
+##Prerequisites
 - Kubernetes cluster up and running (Minikube, k3s, or vSphere VMs)
 - `kubectl` configured and connected to your cluster
 - `helm` installed and configured
@@ -10,7 +10,7 @@ Prerequisites
 - ngrok account (for exposing Jenkins UI)
 - Azure CLI and Azure Function Core Tools (if deploying Azure Functions)
 Setup Steps
-1. Kubernetes cluster verification
+##1. Kubernetes cluster verification
 Check Kubernetes is accessible:
 
 ```bash
@@ -18,7 +18,7 @@ kubectl get nodes
 ```
 
 If you see connection errors, ensure your cluster is running and kubeconfig is properly set.
-2. Install Jenkins on Kubernetes
+##2. Install Jenkins on Kubernetes
 Edit `jenkins-values.yaml` to configure Jenkins admin credentials:
 
 ```yaml
@@ -39,7 +39,7 @@ To uninstall Jenkins:
 ```bash
 ansible-playbook down.yml
 ```
-3. Expose Jenkins
+##3. Expose Jenkins
 Using ngrok
 - Install ngrok:
 
@@ -65,18 +65,18 @@ Using Traefik and Cloudflare Ingress
 - Configure Traefik ingress controller in your cluster.
 - Create an Ingress resource for Jenkins.
 - Set Cloudflare DNS to point to your Traefik ingress IP.
-4. Jenkins Pipeline Setup with GitHub
+##4. Jenkins Pipeline Setup with GitHub
 - Fork the GitHub repo containing the Jenkinsfile.
 - In Jenkins UI, create a new Pipeline project.
 - Set SCM to Git and provide your repo URL.
 - Configure credentials if needed.
 - Enable webhook in GitHub to trigger builds on push.
-5. Jenkins Pipeline Setup with Gitea
+##5. Jenkins Pipeline Setup with Gitea
 - Fork or create a repo in your Gitea server with the Jenkinsfile.
 - Create a Jenkins Pipeline project pointing to the Gitea repo.
 - Configure Jenkins Gitea plugin for webhooks.
 - Use your cluster IP or exposed Jenkins URL to receive webhook events.
-6. Deploying Azure Functions (Optional)
+##6. Deploying Azure Functions (Optional)
 - Edit Jenkinsfile to include Azure CLI commands for deployment.
 - Ensure Azure Service Principal credentials are stored in Jenkins.
 - The Jenkins pipeline stages typically include:
