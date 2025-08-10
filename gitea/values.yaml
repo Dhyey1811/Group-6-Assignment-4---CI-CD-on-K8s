@@ -1,0 +1,12 @@
+persistence:
+  enabled: true
+  size: 10Gi
+
+gitea:
+  config:
+    database:
+      DB_TYPE: mysql
+      HOST: gitea-mysql.default.svc.cluster.local:3306
+      NAME: giteadb
+      USER: giteauser
+      PASSWD: giteapass
