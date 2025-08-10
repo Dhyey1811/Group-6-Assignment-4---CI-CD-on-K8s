@@ -1,75 +1,104 @@
-## Gitea Deployment with Persistent Storage and External MySQL Database
-## Overview
-## This project deploys **Gitea** using the Helm chart on Kubernetes, with:
-
-- Persistent storage for repository data
-- External MySQL database for production-grade data handling
-- Public exposure of the Gitea UI using **kubectl port-forward** and **ngrok**
+Jenkins CI/CD on Kubernetes with GitHub, Gitea, and ngrok
+Overview
+This project demonstrates how to install Jenkins on a Kubernetes cluster using Ansible and Helm, configure Jenkins pipelines integrated with GitHub and Gitea repositories, and expose Jenkins UI using ngrok or Traefik with Cloudflare ingress.
 Prerequisites
-- Kubernetes cluster with `kubectl` configured
-- Helm installed
-- Ansible installed (if using automation)
-- Ngrok installed and authtoken configured
-- Access to a public terminal or Codespaces
+- Kubernetes cluster up and running (Minikube, k3s, or vSphere VMs)
+- `kubectl` configured and connected to your cluster
+- `helm` installed and configured
+- `ansible` installed with `kubernetes.core` collection
+- Access to GitHub and Gitea accounts
+- ngrok account (for exposing Jenkins UI)
+- Azure CLI and Azure Function Core Tools (if deploying Azure Functions)
+Setup Steps
+1. Kubernetes cluster verification
+Check Kubernetes is accessible:
 
-## Step 1: Deploy MySQL Database
-We use the Bitnami MySQL Helm chart to create an external database for Gitea:
 ```bash
-helm repo add bitnami https://charts.bitnami.com/bitnami
-helm install mysql bitnami/mysql --set auth.rootPassword=my-root-password,auth.database=gitea
+kubectl get nodes
 ```
 
-*Replace `my-root-password` with a strong password.*
-Step 2: Deploy Gitea with Persistent Storage and External Database
-Create a `values.yaml` file with the following content:
+If you see connection errors, ensure your cluster is running and kubeconfig is properly set.
+2. Install Jenkins on Kubernetes
+Edit `jenkins-values.yaml` to configure Jenkins admin credentials:
+
 ```yaml
-persistence:
-  enabled: true
-  size: 10Gi
-  storageClassName: standard
-
-database:
-  type: mysql
-  host: mysql.default.svc.cluster.local
-  name: giteaname
-  user: giteauser
-  password: giteapass
+controller:
+  admin:
+    username: admin
+    password: admin123
 ```
 
-## Deploy Gitea Helm chart using this file:
+Run Ansible playbook to install Jenkins and Traefik (optional):
+
 ```bash
-helm repo add gitea-charts https://dl.gitea.io/charts/
-helm install gitea gitea-charts/gitea -f values.yaml
+ansible-playbook up.yml
 ```
 
-## Step 3: Verify Deployments and Persistent Volumes
+To uninstall Jenkins:
+
 ```bash
-kubectl get pods -n default
-kubectl get pvc -n default
+ansible-playbook down.yml
 ```
+3. Expose Jenkins
+Using ngrok
+- Install ngrok:
 
-Ensure all pods are running and PVC is bound.
-## Step 4: Expose Gitea Locally and Publicly
-Forward Gitea HTTP port to your local machine:
 ```bash
-kubectl port-forward svc/gitea-http 3000:3000
+npm install -g ngrok
 ```
 
-Open another terminal and start ngrok tunnel:
+- Authenticate with your ngrok authtoken:
+
 ```bash
-ngrok http 3000
+ngrok config add-authtoken YOUR_NGROK_AUTH_TOKEN
 ```
 
-Copy the generated `https://*.ngrok-free.app` URL.
-## Step 5: Access Gitea
-Open your browser and navigate to the ngrok URL. You should see the Gitea UI.
-Notes
-- Remember to add your ngrok URL to Gitea’s `ROOT_URL` in the Helm `values.yaml` for proper links.
-- Store secrets securely (avoid hardcoding passwords in production).
-- This setup is suitable for development and demo purposes.
+- Start tunnel to Jenkins service port (e.g., 8080):
+
+```bash
+kubectl port-forward svc/jenkins 8080:8080
+ngrok http 8080
+```
+
+Copy the forwarding URL from ngrok to access Jenkins UI externally.
+Using Traefik and Cloudflare Ingress
+- Configure Traefik ingress controller in your cluster.
+- Create an Ingress resource for Jenkins.
+- Set Cloudflare DNS to point to your Traefik ingress IP.
+4. Jenkins Pipeline Setup with GitHub
+- Fork the GitHub repo containing the Jenkinsfile.
+- In Jenkins UI, create a new Pipeline project.
+- Set SCM to Git and provide your repo URL.
+- Configure credentials if needed.
+- Enable webhook in GitHub to trigger builds on push.
+5. Jenkins Pipeline Setup with Gitea
+- Fork or create a repo in your Gitea server with the Jenkinsfile.
+- Create a Jenkins Pipeline project pointing to the Gitea repo.
+- Configure Jenkins Gitea plugin for webhooks.
+- Use your cluster IP or exposed Jenkins URL to receive webhook events.
+6. Deploying Azure Functions (Optional)
+- Edit Jenkinsfile to include Azure CLI commands for deployment.
+- Ensure Azure Service Principal credentials are stored in Jenkins.
+- The Jenkins pipeline stages typically include:
+
+  - Build: `npm install` and `func start`
+  - Test: run tests if any
+  - Deploy: `func azure functionapp publish <app-name> --force`
+Troubleshooting
+- `kubectl` connection refused → Check your kubeconfig and cluster status.
+- Helm install errors about `controller.adminUser` → Update `jenkins-values.yaml` keys to `controller.admin.username` and `controller.admin.password`.
+- Helm secret errors → Ensure `existingSecret` is removed or properly created.
+- ngrok `command not found` → Install ngrok and authenticate.
+- ngrok auth token errors → Use the correct token from your ngrok dashboard (not `cr_` prefixed API tokens).
+References
+- Jenkins Helm Chart: https://charts.jenkins.io/
+- Ansible Kubernetes Collection: https://docs.ansible.com/ansible/latest/collections/kubernetes/core/
+- ngrok Documentation: https://ngrok.com/docs
+- Kubernetes Documentation: https://kubernetes.io/docs/
+- Azure Functions Core Tools: https://learn.microsoft.com/en-us/azure/azure-functions/functions-core-tools
 Submission
-- Include screenshots showing running pods, PVCs, ngrok public URL, and Gitea UI.
-- Add the ngrok public URL to `comment.txt`.
-- Provide this README file with detailed instructions.
-Contact
-For questions, contact: Dhyey Patel (your email)
+Please submit links to:
+
+1. This repository containing `up.yml` and `down.yml`
+2. Your GitHub repository with Jenkinsfile and pipeline setup
+3. Your Gitea repository with Jenkinsfile and pipeline setup
